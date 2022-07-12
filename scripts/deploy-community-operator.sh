@@ -17,11 +17,22 @@ if [ "$CATALOG_CHECK_RETRIES" -le 0  ]; then
 	exit 1
 fi
 
-if [[ -z "$(oc get packagemanifests | grep zoperator 2>/dev/null)" ]]; then
-  echo "zoperator package was not found in the catalog, skipping installation"
+if [[ ! -z "$(oc get packagemanifests | grep zoperator 2>/dev/null)" ]]; then
+  echo "zoperator package was found. installing zoperator"
+  # Community operator name (03/29/2022 only zoperator is both community and redhat certified)
+  COMMUNITY_OPERATOR_NAME=zoperator.v0.3.6
+  COMMUNITY_OPERATOR_BASE=zoperator
+  OPERATOR_CHANNEL=alpha
+elif [[ ! -z "$(oc get packagemanifests | grep instana-agent 2>/dev/null)" ]]; then
+  echo "instana-agent operator was found. installing instana-agent"
+  COMMUNITY_OPERATOR_NAME=instana-agent-operator.v2.0.5
+  COMMUNITY_OPERATOR_BASE=instana-agent-operator
+  OPERATOR_CHANNEL=stable
+else
+  echo "operator packagemanifests were not found"
   exit 0
 fi
-echo "zoperator package found, starting installation"
+
 
 #check if operator-sdk is installed and install it if needed
 if [[ -z "$(which operator-sdk 2>/dev/null)" ]]; then
@@ -29,7 +40,7 @@ if [[ -z "$(which operator-sdk 2>/dev/null)" ]]; then
   "$SCRIPT_DIR"/install-operator-sdk.sh
 else
   echo "operator-sdk was found in the path, no need to install it"
-	fi
+fi
 
 # Select namespace based on OCP vs Kind
 if $TNF_NON_OCP_CLUSTER
