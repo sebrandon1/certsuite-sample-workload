@@ -29,6 +29,13 @@ spec:
         - image: quay.io/testnetworkfunction/cnf-test-partner:latest
           imagePullPolicy: IfNotPresent
           name: test
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]  
+            # seccompProfile: # This can be left commented/not provided because empty is "RuntimeDefault".
+            #   type: "RuntimeDefault"
           ports:
             - name: "http-probe"
               containerPort: 8080

@@ -3,8 +3,8 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   annotations:
-    debug.openshift.io/source-container: container-00
-    openshift.io/scc: node-exporter
+    # debug.openshift.io/source-container: container-00
+    openshift.io/scc: privileged
   namespace: {{ DEFAULT_NAMESPACE }}
   name: debug
 spec:
