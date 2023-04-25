@@ -1,4 +1,4 @@
-name: start-k8s-cluster
+name: start-k8s-cluster-ubuntu
 description: Creates and configures a k8s cluster for all things TNF-related
 inputs:
   working_directory:
@@ -10,11 +10,11 @@ runs:
   using: 'composite'
   steps:
     - name: Run Bootstrap Cluster
-      run: make bootstrap-cluster-fedora-local
+      run: make bootstrap-cluster
       working-directory: ${{ inputs.working_directory }}
       shell: bash
 
-    - name: Run Bootstrap Cluster
+    - name: Run Bootstrap Docker
       run: make bootstrap-docker-fedora-local
       working-directory: ${{ inputs.working_directory }}
       shell: bash
