@@ -18,7 +18,7 @@ install:
 	./scripts/deploy-pod-disruption-budget.sh
 	./scripts/deploy-special-resources.sh
 	./scripts/deploy-test-crds.sh
-	./scripts/install-olm.sh
+#	./scripts/install-olm.sh
 	./scripts/manage-service.sh deploy
 	./scripts/deploy-network-policies.sh
 	./scripts/delete-standard-storageclass.sh
