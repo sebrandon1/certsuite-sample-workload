@@ -7,6 +7,13 @@ SCRIPT_DIR=$(dirname "$0")
 # shellcheck disable=SC1091 # Not following.
 source "$SCRIPT_DIR"/init-env.sh
 
+# quay.io/deliedit/test:catalog-index-test is a single-arch amd64 image.
+# Deploying it on arm64 CrashLoopBackOffs the catalog pod (exec format error).
+if [[ "$CPU_ARCH" == "aarch64" || "$CPU_ARCH" == "arm64" ]]; then
+	echo "Skipping custom catalog: image is amd64-only (CPU_ARCH=$CPU_ARCH)."
+	exit 0
+fi
+
 oc create ns "$CUSTOM_CATALOG_NAMESPACE" --dry-run=client --output yaml | oc apply --filename -
 
 # Apply the catalogsource YAML
