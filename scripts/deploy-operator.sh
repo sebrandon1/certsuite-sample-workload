@@ -21,6 +21,13 @@ COMMENT1
 "$SCRIPT_DIR"/install-olm.sh
 "$SCRIPT_DIR"/delete-operator.sh
 
+# nginx-ingress-operator is subscribed from certified-operators in
+# openshift-marketplace, which Kind/OLM does not provide.
+if $CERTSUITE_NON_OCP_CLUSTER || ! oc get catalogsource certified-operators -n openshift-marketplace &>/dev/null; then
+	echo "Skipping nginx-ingress-operator: certified-operators catalog is not available."
+	exit 0
+fi
+
 <<COMMENT2
 	# Creates a secret if a pem file exists
 	"$SCRIPT_DIR"/create-secret.sh
@@ -54,6 +61,7 @@ oc apply --filename ./test-target/operator-single-install-mode.yaml
 OPERATOR_NS="nginx-ops"
 MAX_COUNT=20
 CURRENT_COUNT=0
+PODS_FOUND=0
 
 while [[ "$CURRENT_COUNT" -lt "$MAX_COUNT" ]]; do
 	((CURRENT_COUNT++))
@@ -61,16 +69,22 @@ while [[ "$CURRENT_COUNT" -lt "$MAX_COUNT" ]]; do
 	POD_COUNT=$(oc get pods -n "$OPERATOR_NS" --no-headers 2>/dev/null | wc -l)
 
 	if [[ $POD_COUNT -eq 0 ]]; then
-		echo "No pods found in "$OPERATOR_NS" namespace. Waiting for pods to be created..."
+		echo "No pods found in ${OPERATOR_NS} namespace. Waiting for pods to be created..."
 		sleep 5
 	else
-		echo "Pods found in "$OPERATOR_NS" namespace."
+		echo "Pods found in ${OPERATOR_NS} namespace."
+		PODS_FOUND=1
 		break
 	fi
 done
 
-if [[ "$CURRENT_COUNT" -ge "$MAX_COUNT" ]]; then
-	echo "Maximum check count ($MAX_COUNT) reached. Exiting without finding pods in "$OPERATOR_NS"."
-else
-	echo "Exited after "$CURRENT_COUNT" check(s). Pods are ready."
+if [[ "$PODS_FOUND" -eq 0 ]]; then
+	echo "Maximum check count ($MAX_COUNT) reached. No pods found in ${OPERATOR_NS}."
+	echo "--- diagnostics ---"
+	oc get pods -n "${CERTSUITE_EXAMPLE_NAMESPACE}" || true
+	oc logs -n "${CUSTOM_CATALOG_NAMESPACE}" -l olm.catalogSource=custom-catalog --tail=50 || true
+	oc describe subscription nginx-ingress-operator -n "${OPERATOR_NS}" || true
+	oc get catalogsource -A || true
+	exit 1
 fi
+echo "Exited after ${CURRENT_COUNT} check(s). Pods are ready."
